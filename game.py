@@ -12,10 +12,59 @@ class Checkers:
         for r, row in enumerate(self.board):
             print(f"{r}  " + " ".join(row))
 
+    # Task 2: Check whether a player still has pieces
+    def has_pieces(self, player):
+        return any(
+            cell in (player, player + "K")
+            for row in self.board
+            for cell in row
+        )
+
+    # Task 2: Check whether a player has at least one legal move
+    def has_legal_move(self, player):
+        for sr in range(SIZE):
+            for sc in range(SIZE):
+                if self.board[sr][sc] not in (player, player + "K"):
+                    continue
+
+                for er in range(SIZE):
+                    for ec in range(SIZE):
+                        if capture_move(
+                            self.board,
+                            player,
+                            (sr, sc),
+                            (er, ec)
+                        ):
+                            return True
+
+                        if simple_move(
+                            self.board,
+                            player,
+                            (sr, sc),
+                            (er, ec)
+                        ):
+                            return True
+
+        return False
+
+    # Task 2: Check whether the game is over
+    def game_over(self):
+        for player, name in [("R", "Red"), ("B", "Blue")]:
+            if not self.has_pieces(player) or not self.has_legal_move(player):
+                winner = "Blue" if player == "R" else "Red"
+                print(f"Game Over! {winner} wins.")
+                return True
+
+        return False
+
     def run(self):
         print("Checkers — move: sr sc er ec")
         while True:
             self.print_board()
+
+            if self.game_over():
+                return
+
             raw = input(f"{self.player}> ").strip().lower().split()
             if raw == ["q"]:
                 return
