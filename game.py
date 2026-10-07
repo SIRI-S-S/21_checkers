@@ -57,36 +57,148 @@ class Checkers:
 
         return False
 
+    # Task 3: Check whether a player has any capture available
+    def has_any_capture(self, player):
+        for sr in range(SIZE):
+            for sc in range(SIZE):
+                if self.board[sr][sc] not in (player, player + "K"):
+                    continue
+
+                for er in range(SIZE):
+                    for ec in range(SIZE):
+                        if capture_move(
+                            self.board,
+                            player,
+                            (sr, sc),
+                            (er, ec)
+                        ):
+                            return True
+
+        return False
+
+    # Task 3: Check whether the same piece can capture again
+    def has_capture_from(self, player, start):
+        sr, sc = start
+
+        if self.board[sr][sc] not in (player, player + "K"):
+            return False
+
+        for er in range(SIZE):
+            for ec in range(SIZE):
+                if capture_move(
+                    self.board,
+                    player,
+                    start,
+                    (er, ec)
+                ):
+                    return True
+
+        return False
+
     def run(self):
         print("Checkers — move: sr sc er ec")
+
         while True:
             self.print_board()
 
             if self.game_over():
                 return
 
-            raw = input(f"{self.player}> ").strip().lower().split()
+            player = self.player
+
+            # Task 3: forced capture
+            forced_capture = self.has_any_capture(player)
+
+            raw = input(f"{player}> ").strip().lower().split()
+
             if raw == ["q"]:
                 return
+
             if len(raw) != 4:
                 print("Enter four coordinates.")
                 continue
+
             try:
                 sr, sc, er, ec = map(int, raw)
             except ValueError:
                 print("Coordinates must be numbers.")
                 continue
+
             if not all(0 <= x < SIZE for x in (sr, sc, er, ec)):
                 print("Outside board.")
                 continue
-            if self.board[sr][sc] not in (self.player, self.player + "K"):
+
+            if self.board[sr][sc] not in (player, player + "K"):
                 print("That is not your piece.")
                 continue
 
-            start, end = (sr, sc), (er, ec)
-            if capture_move(self.board, self.player, start, end):
+            start = (sr, sc)
+            end = (er, ec)
+
+            if forced_capture:
+                if not capture_move(self.board, player, start, end):
+                    print("You must capture when a capture is available.")
+                    continue
+
                 move_piece(self.board, start, end)
-            elif simple_move(self.board, self.player, start, end):
+                promote(self.board)
+
+                # Task 3: multi-capture
+                current_position = end
+
+                while self.has_capture_from(player, current_position):
+                    self.print_board()
+
+                    raw = input(f"{player} (continue capture)> ").strip().lower().split()
+
+                    if raw == ["q"]:
+                        return
+
+                    if len(raw) != 4:
+                        print("Enter four coordinates.")
+                        continue
+
+                    try:
+                        csr, csc, cer, cec = map(int, raw)
+                    except ValueError:
+                        print("Coordinates must be numbers.")
+                        continue
+
+                    if not all(0 <= x < SIZE for x in (csr, csc, cer, cec)):
+                        print("Outside board.")
+                        continue
+
+                    if (csr, csc) != current_position:
+                        print("You must continue capturing with the same piece.")
+                        continue
+
+                    capture_start = current_position
+                    capture_end = (cer, cec)
+
+                    if not capture_move(
+                        self.board,
+                        player,
+                        capture_start,
+                        capture_end
+                    ):
+                        print("You must make another capture with this piece.")
+                        continue
+
+                    move_piece(
+                        self.board,
+                        capture_start,
+                        capture_end
+                    )
+                    promote(self.board)
+                    current_position = capture_end
+
+                self.player = "B" if self.player == "R" else "R"
+                continue
+
+            # No capture is available, so a normal move or capture is allowed.
+            if capture_move(self.board, player, start, end):
+                move_piece(self.board, start, end)
+            elif simple_move(self.board, player, start, end):
                 move_piece(self.board, start, end)
             else:
                 print("Invalid move.")
