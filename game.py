@@ -141,7 +141,15 @@ class Checkers:
                     continue
 
                 move_piece(self.board, start, end)
+
+                was_promoted = self.board[end[0]][end[1]] == player
                 promote(self.board)
+                promoted = self.board[end[0]][end[1]] != player
+
+                if promoted and not was_promoted:
+                    print(f"Capture: {start} -> {end}; promoted to king.")
+                else:
+                    print(f"Capture: {start} -> {end}.")
 
                 # Task 3: multi-capture
                 current_position = end
@@ -189,7 +197,22 @@ class Checkers:
                         capture_start,
                         capture_end
                     )
+
+                    before_promotion = self.board[capture_end[0]][capture_end[1]]
                     promote(self.board)
+                    promoted = (
+                        self.board[capture_end[0]][capture_end[1]]
+                        != before_promotion
+                    )
+
+                    if promoted:
+                        print(
+                            f"Capture: {capture_start} -> {capture_end}; "
+                            f"promoted to king."
+                        )
+                    else:
+                        print(f"Capture: {capture_start} -> {capture_end}.")
+
                     current_position = capture_end
 
                 self.player = "B" if self.player == "R" else "R"
@@ -198,11 +221,29 @@ class Checkers:
             # No capture is available, so a normal move or capture is allowed.
             if capture_move(self.board, player, start, end):
                 move_piece(self.board, start, end)
+
+                before_promotion = self.board[end[0]][end[1]]
+                promote(self.board)
+                promoted = self.board[end[0]][end[1]] != before_promotion
+
+                if promoted:
+                    print(f"Capture: {start} -> {end}; promoted to king.")
+                else:
+                    print(f"Capture: {start} -> {end}.")
+
             elif simple_move(self.board, player, start, end):
                 move_piece(self.board, start, end)
+
+                before_promotion = self.board[end[0]][end[1]]
+                promote(self.board)
+                promoted = self.board[end[0]][end[1]] != before_promotion
+
+                if promoted:
+                    print(f"Move: {start} -> {end}; promoted to king.")
+                else:
+                    print(f"Move: {start} -> {end}.")
             else:
                 print("Invalid move.")
                 continue
 
-            promote(self.board)
             self.player = "B" if self.player == "R" else "R"
